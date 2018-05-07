@@ -60,7 +60,6 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/strings/numbers.h"
 #include "tensorflow/core/lib/strings/str_util.h"
-#include "tensorflow/core/lib/strings/numbers.h"
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/init_main.h"
 #include "tensorflow/core/platform/protobuf.h"
@@ -78,7 +77,7 @@ limitations under the License.
 #include "tensorflow_serving/model_servers/server_core.h"
 #include "tensorflow_serving/servables/tensorflow/classification_service.h"
 #include "tensorflow_serving/servables/tensorflow/get_model_metadata_impl.h"
-#include "tensorflow_serving/servables/tensorflow/multi_inference.h"
+#include "tensorflow_serving/servables/tensorflow/multi_inference_helper.h"
 #include "tensorflow_serving/servables/tensorflow/predict_impl.h"
 #include "tensorflow_serving/servables/tensorflow/regression_service.h"
 #include "tensorflow_serving/servables/tensorflow/session_bundle_config.pb.h"
@@ -100,7 +99,6 @@ using tensorflow::serving::ServableState;
 using tensorflow::serving::ServerCore;
 using tensorflow::serving::SessionBundleConfig;
 using tensorflow::serving::TensorflowClassificationServiceImpl;
-using tensorflow::serving::TensorflowRegressionServiceImpl;
 using tensorflow::serving::TensorflowPredictor;
 using tensorflow::serving::TensorflowRegressionServiceImpl;
 using tensorflow::serving::UniquePtrWithDeps;
@@ -252,8 +250,9 @@ class PredictionServiceImpl final : public PredictionService::Service {
     // By default, this is infinite which is the same default as RunOptions.
     run_options.set_timeout_in_ms(
         DeadlineToTimeoutMillis(context->raw_deadline()));
-    const grpc::Status status = tensorflow::serving::ToGRPCStatus(
-        RunMultiInference(run_options, core_, *request, response));
+    const grpc::Status status =
+        tensorflow::serving::ToGRPCStatus(RunMultiInferenceWithServerCore(
+            run_options, core_, *request, response));
     if (!status.ok()) {
       VLOG(1) << "MultiInference request failed: " << status.error_message();
     }
